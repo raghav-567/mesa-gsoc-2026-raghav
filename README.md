@@ -1,93 +1,97 @@
-<!-- After forking, you can update this readme to give an overview of your work and learning, if you want. -->
-
 # Mesa GSoC Learning Space
-This is a template repository for GSoC candidates working on [Mesa](https://github.com/mesa/mesa). Fork it to create your personal learning space.
 
-## What is this?
-Before contributing to Mesa, you need to understand Mesa — not just the API, but how agent-based models work and how Mesa's pieces fit together. This repo is your space to do that learning, visibly.
+This repository documents my hands-on preparation for Mesa GSoC, focused on Mesa-LLM stabilization and reproducible performance analysis.
 
-**The idea is simple: build models first, contribute second.**
+## 2026 Alignment Snapshot
 
-This repo is also your chance to practice the open-source skills that make contributions successful: clear communication, clean git history, good documentation, collaboration, and code review. These matter as much as the code itself.
+- Mesa GSoC 2026 emphasis: build models first, then propose scoped improvements with proof-of-concept artifacts.
+- Mesa-LLM emphasis right now: maintenance and stabilization on Mesa 3.x are higher priority than broad Mesa 4 migration.
+- This repo is intentionally organized around reproducible friction discovery (model code + benchmark CSV + implementation notes).
 
-_Everything here is a suggestion, nothing is mandatory. It's a tool to help you structure your own learning process. Use as you see fit._
+## Current Focus
 
-## Why build models?
-Mesa is a library *for modellers*. If you want to improve it, you need to experience it the way its users do. That means building models — not just reading the source code or tutorials.
+I am using a two-model progression approach:
 
-When you build models, you discover things you can't learn any other way:
-- **Where Mesa helps and where it gets in the way.** You'll hit friction points, confusing APIs, missing features, unclear documentation. These are the real problems worth solving — and you found them because you needed something to work, not because you were looking for a PR to open.
-- **How the pieces fit together.** Mesa has agents, models, spaces, data collection, visualization, event scheduling. Reading about them is different from wiring them together in a model that actually does something. Building gives you the architectural intuition that makes your contributions fit naturally into the framework.
-- **What modellers care about.** The best Mesa contributions historically come from people who hit a real problem in their own work. They understand the context because they live in it. Building models puts you in that position.
+1. Baseline ABM model to establish deterministic non-LLM behavior and runtime baseline.
+2. Mixed-agent latency model to quantify blocking LLM-like inference overhead and mixed-agent observation behavior.
 
-Without this experience, it's very hard to make contributions that actually help Mesa's users. You might write code that compiles and passes tests but solves a problem nobody has, or solves it in a way that doesn't fit how modellers think. Building models first prevents that.
+This structure is aligned with Mesa GSoC guidance: build real models first, identify friction points, then propose targeted improvements.
 
-## How to use this repo
-### 1. Fork this template
-Click "Use this template" (or fork) to create your own copy under your GitHub account.
+## Models
 
-### 2. Fill in your motivation
-Edit `motivation.md` — who you are, why Mesa, what you want to learn, where you want to go. Keep it honest and concise.
+### 1. Basic Wealth Exchange
+- Path: `models/basic_wealth_exchange/`
+- Purpose: baseline throughput and behavior sanity check.
+- Key outputs:
+  - deterministic run support (seeded)
+  - benchmark CSV with runtime and Gini metrics
 
-### 3. Build models
-This is the core of the repo. Build Mesa models in the `models/` folder. Start simple, increase complexity. Each model should have its own folder with:
-- The model code
-- A `README.md` covering:
-  - What the model does and why you chose it
-  - What Mesa features it uses
-  - What you learned building it
-  - What was hard, what surprised you, what you'd do differently
+### 2. Mixed-Agent Latency Benchmark
+- Path: `models/mixed_agent_latency/`
+- Purpose: stress-test scheduler impact of blocking LLM-style calls in mixed agent populations.
+- Key outputs:
+  - seeded latency experiments
+  - benchmark CSV across sheep/wolf counts and simulated latency settings
+  - explicit parsing-latency vs total-step-latency separation
 
-**Focus on learning, not impressing.** A simple model with a thoughtful README is worth more than a complex model you can't explain.
+## Environment
 
-### 4. Review and collaborate
-This is where you practice the collaborative side of open source:
-- **Review others' work**: Find another GSoC candidate's learning repo and open issues or PRs with feedback on their models. Be constructive and specific.
-- **Work together**: Build a model with another candidate. Use branches, PRs, and code review — the same workflow you'd use on Mesa itself.
-- **Document your reviews**: Keep notes in `reviews/` about models you reviewed and what you learned from reading someone else's code.
+All commands below are validated in:
+- `conda` environment: `ml2-env`
+- Python: `3.10.18`
+- Mesa: `3.0.3`
 
-Collaboration is not required, but it's noticed and valued. If you and another candidate review each other's models, improve each other's code, or build something together using proper git workflow — that demonstrates exactly the skills Mesa needs.
+For upstream `mesa-llm` contribution work, use a Python `3.12+` environment because the repository currently declares `requires-python = ">=3.12"` in its `pyproject.toml`.
 
-### 5. Link to your Mesa PRs
-When you open a PR on any Mesa repo, link to the relevant work in this learning space. This gives reviewers context for your understanding without having to extract it through the review process.
+## Quick Run
 
-## Repo structure
-
-```
-├── motivation.md           # Who you are, why Mesa, what you want to learn
-├── models/
-│   ├── my_first_model/
-│   │   ├── model.py
-│   │   └── README.md       # What you built, what you learned
-│   ├── second_model/
-│   │   ├── ...
-│   │   └── README.md
-│   └── ...
-├── reviews/                 # Notes from reviewing other candidates' work
-│   └── ...
-└── notes/                   # Optional: design explorations, reading notes, scratch work
-    └── ...
+Run baseline model:
+```bash
+conda run -n ml2-env python models/basic_wealth_exchange/model.py --steps 20 --num-agents 50 --seed 42
 ```
 
-## What makes a good learning space?
-- **Models that show progression.** Start with a basic model (Boltzmann Wealth, Schelling), then build something that stretches you — a model that uses discrete spaces, PropertyLayers, event scheduling, data collection, or visualization.
-- **Honest READMEs.** "I got stuck on X and solved it by Y" is more useful than a polished summary. We want to see your thinking, not a press release.
-- **Clean git practices.** Meaningful commit messages, branches for separate models, no giant "add everything" commits. This is practice for contributing to Mesa.
-- **Engagement with others.** Reviewing someone else's model, suggesting improvements, or building together shows you understand that open source is collaborative.
+Run mixed-agent model:
+```bash
+conda run -n ml2-env python models/mixed_agent_latency/model.py --steps 20 --num-sheep 20 --num-wolves 5 --latency-ms 50 --seed 42
+```
 
-## Suggested starting points
-1. Go through Mesa's [introductory tutorials](https://mesa.readthedocs.io/latest/getting_started.html)
-2. Study the [core examples](https://github.com/mesa/mesa/tree/main/mesa/examples) — don't just run them, read the code and understand the design choices
-3. Build your own version of a classic ABM (Schelling, Sugarscape, flocking, etc.)
-4. Then build something original — a model for a domain you're interested in
-5. Read the [Mesa 3.5 release notes](https://github.com/mesa/mesa/releases) to understand recent changes and direction
-6. Look at [open discussions](https://github.com/mesa/mesa/discussions) to understand what Mesa is working toward
+## Benchmarks
 
-## Resources
+Run baseline benchmark:
+```bash
+conda run -n ml2-env python models/basic_wealth_exchange/run_benchmark.py --steps 200 --num-agents 100 --runs 5
+```
+
+Output:
+- `models/basic_wealth_exchange/benchmark_results.csv`
+
+Run mixed-agent benchmark:
+```bash
+conda run -n ml2-env python models/mixed_agent_latency/run_benchmark.py --steps 100 --runs 3 --sheep-list 20,50 --wolf-list 2,5,10 --latency-list 10,50,100
+```
+
+Output:
+- `models/mixed_agent_latency/benchmark_results.csv`
+
+## Proposal-Oriented Artifacts
+
+- Motivation: `motivation.md`
+- Optimized approach and milestone plan: `proposal_optimized_approach.md`
+- Upstream flow/requirements notes: `notes/mesa_llm_gsoc_2026_alignment.md`
+
+## Why This Repo Exists
+
+Mesa is a modeller-first library. I am using this space to:
+- collect concrete evidence of API/performance friction points,
+- convert those findings into scoped, testable proposal milestones,
+- demonstrate readiness for collaborative open-source development.
+
+## References
+
 - [Mesa documentation](https://mesa.readthedocs.io/)
-- [Mesa contributing guide](https://github.com/mesa/mesa/blob/main/CONTRIBUTING.md)
 - [Mesa migration guide](https://mesa.readthedocs.io/latest/migration_guide.html)
-- [Community examples](https://github.com/mesa/mesa-examples)
-- [ABM concepts MOOC](https://ocw.tudelft.nl/course-lectures/agent-based-modeling/)
-- [Practical Mesa MOOC](https://www.complexityexplorer.org/courses/172-agent-based-models-with-python-an-introduction-to-mesa)
-- [Matrix chat](https://matrix.to/#/#project-mesa:matrix.org)
+- [Mesa contributing guide](https://github.com/mesa/mesa/blob/main/CONTRIBUTING.md)
+- [Mesa discussions](https://github.com/mesa/mesa/discussions)
+- [Mesa-LLM repository](https://github.com/mesa/mesa-llm)
+- [Mesa GSoC 2026 guide](https://github.com/mesa/mesa/wiki/Google-Summer-of-Code-2026)
+- [Mesa GSoC 2026 project ideas](https://github.com/mesa/mesa/wiki/GSoC-2026-Project-Ideas)
